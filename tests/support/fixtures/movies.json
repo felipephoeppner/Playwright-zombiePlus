@@ -1,0 +1,82 @@
+{
+  "a_noite_dos_mortos_vivos": {
+    "title": "A Noite dos Mortos-Vivos",
+    "overview": "Desconhecidos se refugiam em uma casa isolada enquanto mortos retornam à vida. Cercados, precisam enfrentar os ataques e os conflitos entre os sobreviventes.",
+    "release_year": 1970,
+    "company": "Columbia Pictures",
+    "featured": false,
+    "cover": "covers/night-of-the-living-dead-1968.png"
+  },
+  "despertar_dos_mortos": {
+    "title": "Despertar dos Mortos",
+    "overview": "Durante uma epidemia de zumbis, quatro sobreviventes encontram abrigo em um shopping center. A segurança é ameaçada pelos mortos e pela chegada de outros humanos.",
+    "release_year": 1978,
+    "company": "Lionsgate Films",
+    "featured": false,
+    "cover": "covers/dawn-of-the-dead-1978.png"
+  },
+  "dia_dos_mortos": {
+    "title": "Dia dos Mortos",
+    "overview": "Cientistas e militares vivem em um complexo subterrâneo após os zumbis dominarem a superfície. As pesquisas e os conflitos internos ameaçam a sobrevivência do grupo.",
+    "release_year": 1985,
+    "company": "Lionsgate Films",
+    "featured": false,
+    "cover": "covers/day-of-the-dead-1985.png"
+  },
+  "exterminio": {
+    "title": "Extermínio",
+    "overview": "Um homem desperta do coma e encontra Londres devastada por um vírus que transforma pessoas em infectados violentos. Com outros sobreviventes, parte em busca de proteção.",
+    "release_year": 2002,
+    "company": "Fox Entertainment",
+    "featured": false,
+    "cover": "covers/28-days-later-2002.png"
+  },
+  "madrugada_dos_mortos": {
+    "title": "Madrugada dos Mortos",
+    "overview": "Sobreviventes de uma epidemia de zumbis velozes se abrigam em um shopping center. Com os recursos diminuindo, precisam planejar uma fuga.",
+    "release_year": 2004,
+    "company": "Universal Pictures",
+    "featured": false,
+    "cover": "covers/dawn-of-the-dead-2004.png"
+  },
+  "todo_mundo_quase_morto": {
+    "title": "Todo Mundo Quase Morto",
+    "overview": "Uma invasão de zumbis interrompe a rotina de Shaun. Com seu melhor amigo, ele tenta reunir as pessoas próximas e buscar abrigo em um pub.",
+    "release_year": 2004,
+    "company": "Universal Pictures",
+    "featured": false,
+    "cover": "covers/shaun-of-the-dead-2004.png"
+  },
+  "rec": {
+    "title": "REC",
+    "overview": "Uma repórter e seu câmera acompanham bombeiros em uma ocorrência noturna. Presos em um prédio sob quarentena, registram uma infecção que torna os moradores violentos.",
+    "release_year": 2007,
+    "company": "Lionsgate Films",
+    "featured": false,
+    "cover": "covers/rec-2007.png"
+  },
+  "zumbilandia": {
+    "title": "Zumbilândia",
+    "overview": "Um jovem cauteloso se une a três sobreviventes em uma viagem pelos Estados Unidos infestados de zumbis. Entre regras de sobrevivência e conflitos, o grupo cria laços inesperados.",
+    "release_year": 2009,
+    "company": "Sony Pictures",
+    "featured": false,
+    "cover": "covers/zombieland-2009.png"
+  },
+  "guerra_mundial_z": {
+    "title": "Guerra Mundial Z",
+    "overview": "Um ex-investigador da ONU percorre diferentes países em busca de uma forma de conter uma pandemia que transforma pessoas em zumbis.",
+    "release_year": 2013,
+    "company": "Paramount Pictures",
+    "featured": false,
+    "cover": "covers/world-war-z-2013.png"
+  },
+  "invasao_zumbi": {
+    "title": "Invasão Zumbi",
+    "overview": "Um pai e sua filha embarcam em um trem para Busan durante um surto de zumbis. Os passageiros precisam atravessar os vagões e cooperar para sobreviver.",
+    "release_year": 2016,
+    "company": "Netflix",
+    "featured": false,
+    "cover": "covers/train-to-busan-2016.png"
+  }
+}
