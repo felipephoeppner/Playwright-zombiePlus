@@ -9,7 +9,7 @@ Projeto de estudos de automação da aplicação ZombiePlus, com Playwright e Ja
 - Faker: geração de nomes e e-mails para os cenários.
 - PostgreSQL e `pg`: acesso ao banco de testes.
 - dotenv: carregamento das variáveis de ambiente.
-- GitHub Actions: workflow inicial de execução dos testes.
+- GitHub Actions: integração contínua com ambiente completo, execução semanal e relatórios disponíveis nos Artifacts do GitHub.
 
 As versões das dependências estão em `package.json` e `package-lock.json`.
 
@@ -28,6 +28,9 @@ As versões das dependências estão em `package.json` e `package-lock.json`.
 ```text
 .
 ├── .github/workflows/playwright.yml
+├── app/zombieplus-package/
+│   ├── api/
+│   └── web/
 ├── tests/
 │   ├── e2e/
 │   │   ├── leads.spec.js
@@ -59,7 +62,7 @@ As versões das dependências estão em `package.json` e `package-lock.json`.
 - PostgreSQL configurado com as migrations e os seeds da aplicação.
 - Docker Desktop ou Docker Engine em execução, caso utilize o banco em container.
 
-API e WEB não fazem parte deste repositório de testes. No workspace do curso, estão em `../../apps/zombieplus-package/`, a partir da raiz deste projeto.
+API e WEB estão incluídas em `app/zombieplus-package/`, permitindo preparar o ambiente completo no GitHub Actions. No workspace do curso, as cópias locais originais continuam em `../../apps/zombieplus-package/`. Os comandos de preparação local abaixo utilizam essas cópias originais, que já têm seu `.env` próprio; a pipeline utiliza a aplicação incluída neste repositório e define as variáveis no workflow.
 
 **Use um banco exclusivo para testes.** As suítes executam comandos como `DELETE FROM movies` e `DELETE FROM leads` para preparar os cenários.
 
@@ -72,7 +75,7 @@ npm ci
 npx playwright install --with-deps chromium
 ```
 
-Os comandos deste README usam npm. O workflow existente ainda utiliza Yarn.
+Os comandos locais e o workflow utilizam npm, com `npm ci` na pipeline para respeitar os arquivos `package-lock.json`.
 
 ## Variáveis de ambiente
 
@@ -168,7 +171,7 @@ Se as variáveis já estiverem disponíveis no processo, também é possível ut
 
 - Navegador: Chromium, com o perfil `Desktop Chrome`.
 - `fullyParallel: false`: testes do mesmo arquivo não são distribuídos em paralelo; arquivos diferentes ainda podem executar simultaneamente.
-- Workers: dois no CI; seleção automática localmente.
+- Workers: o workflow força um worker com `--workers=1`, evitando conflitos na limpeza das tabelas. O arquivo de configuração prevê dois no CI quando essa opção não é fornecida; localmente, a seleção é automática.
 - Retries: dois no CI e nenhum localmente.
 - `test.only` é proibido no CI.
 - Screenshot em falhas, trace na primeira repetição e vídeo desativado.
@@ -218,13 +221,41 @@ console.log(movie.cover);
 
 Cada filme possui `title`, `overview`, `release_year`, `company`, `featured` e `cover`. O campo `cover` é relativo à pasta `tests/support/fixtures`, por exemplo `movies-cover/invasao-zumbi-2016.jpg`. As empresas foram adaptadas às opções disponíveis no formulário para uso como massa de teste.
 
-## GitHub Actions
+## CI/CD — GitHub Actions
 
-O workflow em `.github/workflows/playwright.yml` executa em pushes e pull requests para `main` e `master`. Atualmente, ele instala dependências e navegadores, executa a suíte e publica o relatório HTML com retenção de 30 dias.
+O workflow está em [`.github/workflows/playwright.yml`](.github/workflows/playwright.yml). A integração contínua (CI) prepara o ambiente e executa os testes automaticamente. Não há etapa de implantação ou entrega contínua (CD) configurada.
 
-**A preparação do ambiente ainda precisa ser implementada no workflow.** Ele não inicia PostgreSQL, API ou WEB, não executa migrations/seeds e não define as variáveis necessárias. No runner, `localhost` aponta para a máquina do GitHub, não para o computador de desenvolvimento.
+### Gatilhos
 
-Para executar a suíte no CI, é necessário disponibilizar API e WEB, preparar um banco de testes e aguardar os serviços antes de iniciar o Playwright.
+- Pushes para `main` e `master`.
+- Pull requests destinados a `main` e `master`.
+- Execução manual pela aba **Actions → Playwright Tests → Run workflow**.
+- Toda segunda-feira às **05h de São Paulo (UTC−3)**, com `cron: '0 8 * * 1'` (08h UTC).
+
+O agendamento utiliza o último commit da branch padrão do repositório. A alteração precisa estar publicada nessa branch para entrar em vigor. O GitHub pode atrasar execuções agendadas em períodos de carga elevada; em repositórios públicos, agendas são desativadas após 60 dias sem atividade no repositório.
+
+### Etapas da pipeline
+
+1. Cria um PostgreSQL 17 temporário e aguarda o healthcheck.
+2. Disponibiliza Node.js 24 e instala as dependências dos testes, da API e da WEB com `npm ci`.
+3. Instala Chromium e suas dependências de sistema.
+4. Aplica migrations e seeds, incluindo o administrador utilizado pelos testes.
+5. Inicia API na porta 3333 e WEB na porta 3000, em segundo plano.
+6. Aguarda os dois serviços responderem antes de iniciar os testes.
+7. Executa `npx playwright test --project=chromium --workers=1`.
+8. Mostra logs dos serviços em caso de falha e publica o relatório HTML como artifact por 30 dias, quando gerado.
+
+Cada job utiliza seu próprio banco temporário; as credenciais de estudo declaradas no workflow pertencem a esse banco. Nenhum banco local precisa estar ligado. O timeout do job é de 10 minutos, incluindo a preparação do ambiente e a execução dos testes.
+
+### Consultar os resultados
+
+Abra **Actions**, selecione a execução e expanda **Executar testes**. Para baixar o relatório, entre em **Summary → Artifacts → playwright-report**. Extraia o ZIP baixado pelo GitHub e aponte para a pasta que contém `index.html`:
+
+```bash
+npx playwright show-report /caminho/da/pasta-extraida
+```
+
+Referências: [agendamentos do GitHub Actions](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule) e [Playwright em CI](https://playwright.dev/docs/ci).
 
 ## Solução de problemas
 

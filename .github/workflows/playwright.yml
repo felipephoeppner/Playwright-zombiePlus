@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main, master]
   workflow_dispatch:
+  schedule:
+    # Segunda-feira, 05h de Sao Paulo (08h UTC).
+    - cron: '0 8 * * 1'
 
 permissions:
   contents: read
