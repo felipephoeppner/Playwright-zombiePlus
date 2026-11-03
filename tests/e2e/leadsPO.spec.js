@@ -1,5 +1,6 @@
-import { test, expect, request} from "../support";
+import { test, expect, request } from "../support";
 import { faker } from "@faker-js/faker";
+import { executeSQL } from "../support/database";
 
 /**
  * @type {string}
@@ -8,21 +9,23 @@ let leadName;
 /**
  * @type {string}
  */
-let leadEmail ;
-
+let leadEmail;
+test.beforeAll(async () => {
+  await executeSQL(`DELETE from leads;`);
+});
 test.beforeEach(async ({ page }) => {
   leadName = faker.person.fullName();
   leadEmail = faker.internet.email();
 });
 
 test("deve cadastrar um lead na fila de espera", async ({ page }) => {
-  await page.landing.visit();
-  await page.landing.openLeadModal();
-  await page.landing.submitLeadForm(leadName, leadEmail);
+  await page.leads.visit();
+  await page.leads.openLeadModal();
+  await page.leads.submitLeadForm(leadName, leadEmail);
 
   const message =
-    "Agradecemos por compartilhar seus dados conosco. Em breve, nossa equipe entrará em contato!";
-  await page.toast.haveText(message);
+    "Agradecemos por compartilhar seus dados conosco. Em breve, nossa equipe entrará em contato.";
+  await page.popup.containText(message);
 });
 
 test("não deve cadastrar quando o email já existe", async ({
@@ -42,58 +45,54 @@ test("não deve cadastrar quando o email já existe", async ({
   expect(response.status()).toBe(201);
   expect(response.ok()).toBeTruthy();
 
-  await page.landing.visit();
-  await page.landing.openLeadModal();
-  await page.landing.submitLeadForm(leadName, leadEmail);
-
-  await page.landing.visit();
-  await page.landing.openLeadModal();
-  await page.landing.submitLeadForm(leadName, leadEmail);
+  await page.leads.visit();
+  await page.leads.openLeadModal();
+  await page.leads.submitLeadForm(leadName, leadEmail);
 
   const message =
-    "O endereço de e-mail fornecido já está registrado em nossa fila de espera.";
-  await page.toast.haveText(message);
+    "Verificamos que o endereço de e-mail fornecido já consta em nossa lista de espera. Isso significa que você está um passo mais perto de aproveitar nossos serviços.";
+  await page.popup.containText(message);
 });
 
 test("Não deve cadastrar um lead com email inválido", async ({ page }) => {
-  await page.landing.visit();
+  await page.leads.visit();
 
-  await page.landing.openLeadModal();
+  await page.leads.openLeadModal();
 
-  await page.landing.submitLeadForm(leadName, "penha.com.br");
+  await page.leads.submitLeadForm(leadName, "penha.com.br");
 
-  await page.landing.alertHaveText("Email incorreto");
+  await page.leads.alertHaveText("Email incorreto");
 });
 
 test("Não deve cadastrar quando nome não é preenchido", async ({ page }) => {
-  await page.landing.visit();
+  await page.leads.visit();
 
-  await page.landing.openLeadModal();
+  await page.leads.openLeadModal();
 
-  await page.landing.submitLeadForm("", leadEmail);
+  await page.leads.submitLeadForm("", leadEmail);
 
-  await page.landing.alertHaveText("Campo obrigatório");
+  await page.leads.alertHaveText("Campo obrigatório");
 });
 
 test("Não deve cadastrar quando um email não é preenchido", async ({
   page,
 }) => {
-  await page.landing.visit();
+  await page.leads.visit();
 
-  await page.landing.openLeadModal();
+  await page.leads.openLeadModal();
 
-  await page.landing.submitLeadForm(leadName, "");
+  await page.leads.submitLeadForm(leadName, "");
 
-  await page.landing.alertHaveText("Campo obrigatório");
+  await page.leads.alertHaveText("Campo obrigatório");
 });
 test("Não deve cadastrar quando um email e user não é preenchido", async ({
   page,
 }) => {
-  await page.landing.visit();
+  await page.leads.visit();
 
-  await page.landing.openLeadModal();
+  await page.leads.openLeadModal();
 
-  await page.landing.submitLeadForm("", "");
+  await page.leads.submitLeadForm("", "");
 
-  await page.landing.alertHaveText(["Campo obrigatório", "Campo obrigatório"]);
+  await page.leads.alertHaveText(["Campo obrigatório", "Campo obrigatório"]);
 });

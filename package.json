@@ -9,5 +9,8 @@
     "@types/node": "^26.6.6",
     "pg": "^8.23.1"
   },
-  "scripts": {}
+  "scripts": {},
+  "dependencies": {
+    "dotenv": "^18.0.9"
+  }
 }

@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 
 
 test.skip("deve cadastrar um lead na fila de espera", async ({ page }) => {
-  await page.goto("http://localhost:3000");
+  await page.goto("/");
 
   //await page.click('//button[text()="Aperte o play... se tiver coragem"]'); XPATH
 
