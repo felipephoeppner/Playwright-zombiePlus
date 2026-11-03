@@ -1,27 +1,141 @@
 name: Playwright Tests
+
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      CI: "true"
+      NODE_ENV: development
+      BASE_URL: http://localhost:3000
+      BASE_API: http://localhost:3333
+      FRONT_URL: http://localhost:3000
+      PORT: "3333"
+      APP_NAME: ZombiePlus
+      DB_DIALECT: postgres
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      DB_NAME: zombieplus
+      DB_USER: zombieplus
+      DB_PASS: zombieplus
+      DB_PASSWORD: zombieplus
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: zombieplus
+          POSTGRES_USER: zombieplus
+          POSTGRES_PASSWORD: zombieplus
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U zombieplus -d zombieplus"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    - name: Install dependencies
-      run: npm install -g yarn && yarn
-    - name: Install Playwright Browsers
-      run: yarn playwright install --with-deps
-    - name: Run Playwright tests
-      run: yarn playwright test
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+      - name: Baixar o repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Instalar dependencias dos testes
+        run: npm ci
+
+      - name: Instalar dependencias da API
+        working-directory: app/zombieplus-package/api
+        run: npm ci
+
+      - name: Instalar dependencias da WEB
+        working-directory: app/zombieplus-package/web
+        run: npm ci
+
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Preparar banco de testes
+        working-directory: app/zombieplus-package/api
+        run: |
+          npx --no-install sequelize db:migrate
+          npx --no-install sequelize db:seed:all
+
+      - name: Iniciar API
+        working-directory: app/zombieplus-package/api
+        run: |
+          mkdir -p uploads
+          nohup node -r sucrase/register src/server.js \
+            > "$RUNNER_TEMP/api.log" 2>&1 < /dev/null &
+
+      - name: Iniciar WEB
+        working-directory: app/zombieplus-package/web
+        run: |
+          nohup ./node_modules/.bin/serve -s build -l 3000 \
+            > "$RUNNER_TEMP/web.log" 2>&1 < /dev/null &
+
+      - name: Aguardar API e WEB
+        run: |
+          node <<'NODE'
+          const urls = [
+            'http://localhost:3333',
+            'http://localhost:3000',
+          ];
+
+          async function waitFor(url) {
+            for (let attempt = 1; attempt <= 30; attempt++) {
+              try {
+                const response = await fetch(url, {
+                  signal: AbortSignal.timeout(2000),
+                });
+                if (response.ok) {
+                  console.log(`Disponivel: ${url}`);
+                  return;
+                }
+              } catch {}
+              await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+            throw new Error(`Servico indisponivel: ${url}`);
+          }
+
+          Promise.all(urls.map(waitFor)).catch(error => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Executar testes
+        run: npx playwright test --project=chromium --workers=1
+
+      - name: Mostrar logs em caso de falha
+        if: failure()
+        run: |
+          for log in "$RUNNER_TEMP/api.log" "$RUNNER_TEMP/web.log"; do
+            if [ -f "$log" ]; then
+              echo "::group::$log"
+              cat "$log"
+              echo "::endgroup::"
+            fi
+          done
+
+      - name: Salvar relatorio
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30

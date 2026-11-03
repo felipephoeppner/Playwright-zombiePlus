@@ -6,5 +6,5 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-*.html
+!app/zombieplus-package/web/build/**/*.html
 .env
